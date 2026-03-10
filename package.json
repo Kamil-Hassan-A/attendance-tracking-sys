@@ -1,0 +1,20 @@
+{
+  "name": "attendance-tracking-sys",
+  "version": "1.0.0",
+  "scripts": {
+    "setup": "npm i && npm run setup-frontend && npm run setup-backend",
+    "setup-frontend": "cd frontend && npm install",
+    "setup-backend": "pip install uv && cd backend && uv sync",
+    "start": "concurrently \"npm run start-frontend\" \"npm run start-backend\"",
+    "start-frontend": "cd frontend && npm run dev",
+    "start-backend": "cd backend && uv run uvicorn main:app --reload"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kamil-Hassan-A/attendance-tracking-sys"
+  },
+  "author": "Bit-Blazer",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
