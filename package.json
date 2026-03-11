@@ -7,7 +7,7 @@
     "setup-backend": "pip install uv && cd backend && uv sync",
     "start": "concurrently \"npm run start-frontend\" \"npm run start-backend\"",
     "start-frontend": "cd frontend && npm run dev",
-    "start-backend": "cd backend && uv run uvicorn main:app --reload"
+    "start-backend": "cd backend && uv run uvicorn app.main:app --reload"
   },
   "repository": {
     "type": "git",
