@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
+from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from ..config import settings
+
+security = HTTPBearer()
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -49,7 +53,6 @@ def create_refresh_token(data: dict) -> str:
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM,
     )
     return encoded_jwt
 
@@ -72,3 +75,39 @@ def verify_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> int:
+    """
+    Extract and verify the access token from Authorization header.
+    Returns the teacher_id if valid.
+
+    Args:
+        credentials: HTTP Bearer credentials from Authorization header.
+
+    Returns:
+        Teacher ID if token is valid.
+
+    Raises:
+        HTTPException: 401 if token is invalid or expired.
+    """
+    token = credentials.credentials
+    payload = verify_token(token)
+
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    try:
+        teacher_id = int(payload["sub"])
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    return teacher_id
