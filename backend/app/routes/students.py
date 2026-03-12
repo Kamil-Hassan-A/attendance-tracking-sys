@@ -18,8 +18,8 @@ def get_all_students(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
 ):
-    """Get all students with pagination."""
-    students = StudentRepository.get_all_students(db, skip=skip, limit=limit)
+    """Get all students created by the current teacher with pagination."""
+    students = StudentRepository.get_students(db, current_user, skip=skip, limit=limit)
     return students
 
 
@@ -67,8 +67,8 @@ def get_student(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
 ):
-    """Get a single student by ID."""
-    student = StudentRepository.get_student_by_id(db, id)
+    """Get a single student by ID (must belong to current teacher)."""
+    student = StudentRepository.get_student_by_id(db, id, current_user)
     if not student:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -84,8 +84,8 @@ def update_student(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
 ):
-    """Update a student record (partial update supported)."""
-    student = StudentRepository.get_student_by_id(db, id)
+    """Update a student record (partial update supported, must belong to current teacher)."""
+    student = StudentRepository.get_student_by_id(db, id, current_user)
     if not student:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -114,8 +114,8 @@ def delete_student(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
 ):
-    """Delete a student and all associated attendance records."""
-    success = StudentRepository.delete_student(db, id)
+    """Delete a student and all associated attendance records (must belong to current teacher)."""
+    success = StudentRepository.delete_student(db, id, current_user)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

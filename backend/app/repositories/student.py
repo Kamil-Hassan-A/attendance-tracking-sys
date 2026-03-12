@@ -45,6 +45,29 @@ class StudentRepository:
         return db.query(Student).offset(skip).limit(limit).all()
 
     @staticmethod
+    def get_students(
+        db: Session, teacher_id: int, skip: int = 0, limit: int = 100
+    ) -> list[Student]:
+        """Get all students (scoped to teacher)."""
+        return (
+            db.query(Student)
+            .filter(Student.created_by == teacher_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    @staticmethod
+    def get_student_by_id(
+        db: Session, student_id: int, teacher_id: int
+    ) -> Student | None:
+        """Get student by internal ID (scoped to teacher)."""
+        return db.query(Student).filter(
+            Student.id == student_id,
+            Student.created_by == teacher_id,
+        ).first()
+
+    @staticmethod
     def update_student(db: Session, student_id: int, **kwargs) -> Student | None:
         """Update a student record (partial update supported)."""
         student = db.query(Student).filter(Student.id == student_id).first()
@@ -60,9 +83,12 @@ class StudentRepository:
         return student
 
     @staticmethod
-    def delete_student(db: Session, student_id: int) -> bool:
-        """Delete a student (cascades to attendance records)."""
-        student = db.query(Student).filter(Student.id == student_id).first()
+    def delete_student(db: Session, student_id: int, teacher_id: int) -> bool:
+        """Delete a student (cascades to attendance records, must belong to teacher)."""
+        student = db.query(Student).filter(
+            Student.id == student_id,
+            Student.created_by == teacher_id,
+        ).first()
         if not student:
             return False
 
@@ -137,13 +163,19 @@ class AttendanceRepository:
     def get_attendance_by_date(
         db: Session,
         date: date,
+        teacher_id: int,
         skip: int = 0,
         limit: int = 100,
     ) -> list[AttendanceRecord]:
-        """Get all attendance records for a specific date."""
+        """Get all attendance records for a specific date (for teacher's students)."""
+        # Join with Student to filter by created_by
         return (
             db.query(AttendanceRecord)
-            .filter(AttendanceRecord.date == date)
+            .join(Student, AttendanceRecord.student_id == Student.id)
+            .filter(
+                AttendanceRecord.date == date,
+                Student.created_by == teacher_id,
+            )
             .offset(skip)
             .limit(limit)
             .all()
@@ -187,12 +219,13 @@ class AttendanceRepository:
         db: Session,
         month: int,
         year: int,
+        teacher_id: int,
     ) -> list[tuple[Student, int, int, int, int]]:
         """
-        Get attendance stats for all students for a given month/year.
+        Get attendance stats for all students of a teacher for a given month/year.
         Returns list of (Student, total_days, present, absent, late).
         """
-        students = db.query(Student).all()
+        students = db.query(Student).filter(Student.created_by == teacher_id).all()
         result = []
 
         for student in students:
@@ -206,28 +239,67 @@ class AttendanceRepository:
     @staticmethod
     def get_students_below_threshold(
         db: Session,
+        teacher_id: int,
         threshold: float = 75.0,
         month: int | None = None,
         year: int | None = None,
     ) -> list[tuple[Student, float]]:
         """
-        Get students whose attendance percentage is below threshold.
+        Get students of a teacher whose attendance percentage is below threshold.
+        Uses database-level filtering with aggregation.
         Returns list of (Student, attendance_percentage).
         """
-        students = db.query(Student).all()
-        below_threshold = []
+        from sqlalchemy import case, cast, Float
+        
+        # Build query for students with attendance stats
+        query = db.query(
+            Student,
+            (
+                cast(
+                    func.sum(
+                        case(
+                            (AttendanceRecord.status == AttendanceStatus.PRESENT, 1),
+                            (AttendanceRecord.status == AttendanceStatus.LATE, 1),
+                            else_=0,
+                        )
+                    ),
+                    Float,
+                ) / func.count(AttendanceRecord.id)
+                * 100
+            ).label("attendance_percentage"),
+        ).filter(Student.created_by == teacher_id).outerjoin(
+            AttendanceRecord, Student.id == AttendanceRecord.student_id
+        )
 
-        for student in students:
-            total, present, absent, late = AttendanceRepository.get_student_attendance_stats(
-                db, student.id, month, year
+        # Apply month/year filters if provided
+        if month and year:
+            query = query.filter(
+                func.extract("month", AttendanceRecord.date) == month,
+                func.extract("year", AttendanceRecord.date) == year,
             )
 
-            if total > 0:
-                percentage = ((present + late) / total) * 100
-            else:
-                percentage = 0.0
+        # Group by student
+        query = query.group_by(Student.id)
 
-            if percentage < threshold:
-                below_threshold.append((student, percentage))
+        # Filter by threshold using HAVING
+        query = query.having(
+            (
+                cast(
+                    func.sum(
+                        case(
+                            (AttendanceRecord.status == AttendanceStatus.PRESENT, 1),
+                            (AttendanceRecord.status == AttendanceStatus.LATE, 1),
+                            else_=0,
+                        )
+                    ),
+                    Float,
+                )
+                / func.count(AttendanceRecord.id)
+                * 100
+            )
+            < threshold
+        )
 
-        return below_threshold
+        # Execute query and build results
+        results = query.all()
+        return [(student, float(percentage)) for student, percentage in results]

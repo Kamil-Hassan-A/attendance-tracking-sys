@@ -25,9 +25,10 @@ def mark_attendance(
     """
     Mark attendance for a student (upserts by student_id + date).
     If a record already exists for the same student and date, it will be updated.
+    Student must belong to the current teacher.
     """
-    # Verify student exists
-    student = StudentRepository.get_student_by_id(db, request.student_id)
+    # Verify student exists and belongs to current teacher
+    student = StudentRepository.get_student_by_id(db, request.student_id, current_user)
     if not student:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -55,9 +56,9 @@ def get_student_attendance(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
 ):
-    """Get all attendance records for a student, newest first."""
-    # Verify student exists
-    student = StudentRepository.get_student_by_id(db, id)
+    """Get all attendance records for a student, newest first (must belong to current teacher)."""
+    # Verify student exists and belongs to current teacher
+    student = StudentRepository.get_student_by_id(db, id, current_user)
     if not student:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -78,9 +79,9 @@ def get_attendance_by_date(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
 ):
-    """Get all attendance records for a specific date."""
+    """Get all attendance records for a specific date (for current teacher's students)."""
     records = AttendanceRepository.get_attendance_by_date(
-        db, date=date, skip=skip, limit=limit
+        db, date=date, teacher_id=current_user, skip=skip, limit=limit
     )
     return records
 
@@ -94,11 +95,11 @@ def get_attendance_stats(
     current_user: int = Depends(get_current_user),
 ):
     """
-    Get attendance statistics for a specific student.
+    Get attendance statistics for a specific student (must belong to current teacher).
     Optional month/year filters for monthly statistics.
     """
     stats = AttendanceService.get_student_stats(
-        db, student_id=id, month=month, year=year
+        db, student_id=id, teacher_id=current_user, month=month, year=year
     )
 
     if not stats:
@@ -118,7 +119,7 @@ def get_monthly_report(
     current_user: int = Depends(get_current_user),
 ):
     """
-    Generate monthly attendance report for all students.
+    Generate monthly attendance report for students of current teacher.
     Requires month (1-12) and year query parameters.
     """
     # Validate month
@@ -128,7 +129,7 @@ def get_monthly_report(
             detail="Month must be between 1 and 12",
         )
 
-    report = AttendanceService.get_monthly_report(db, month=month, year=year)
+    report = AttendanceService.get_monthly_report(db, month=month, year=year, teacher_id=current_user)
     return report
 
 
@@ -141,7 +142,7 @@ def get_below_threshold_students(
     current_user: int = Depends(get_current_user),
 ):
     """
-    Get students whose attendance is below the specified threshold.
+    Get students of current teacher whose attendance is below the specified threshold.
     Threshold defaults to 75%.
     Optional month/year filters.
     """
@@ -153,6 +154,6 @@ def get_below_threshold_students(
         )
 
     students = AttendanceService.get_below_threshold_students(
-        db, threshold=threshold, month=month, year=year
+        db, threshold=threshold, month=month, year=year, teacher_id=current_user
     )
     return students
