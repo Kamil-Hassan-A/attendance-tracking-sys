@@ -65,6 +65,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "python-jose" },
+    { name = "scalar-fastapi" },
     { name = "sqlalchemy" },
     { name = "uvicorn" },
 ]
@@ -81,6 +82,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.13.1" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "python-jose", specifier = ">=3.5.0" },
+    { name = "scalar-fastapi", specifier = ">=1.8.0" },
     { name = "sqlalchemy", specifier = ">=2.0.48" },
     { name = "uvicorn", specifier = ">=0.41.0" },
 ]
@@ -799,6 +801,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/da/8a/22b7beea3ee0d44b1916c0c1cb0ee3af23b700b6da9f04991899d0c555d4/rsa-4.9.1.tar.gz", hash = "sha256:e7bdbfdb5497da4c07dfd35530e1a902659db6ff241e39d9953cad06ebd0ae75", size = 29034, upload-time = "2025-04-16T09:51:18.218Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/64/8d/0133e4eb4beed9e425d9a98ed6e081a55d195481b7632472be1af08d2f6b/rsa-4.9.1-py3-none-any.whl", hash = "sha256:68635866661c6836b8d39430f97a996acbd61bfa49406748ea243539fe239762", size = 34696, upload-time = "2025-04-16T09:51:17.142Z" },
+]
+
+[[package]]
+name = "scalar-fastapi"
+version = "1.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/14/cfb20118d1cb720b23bdb09c1f5f636dce1a7929c4aeb7b6cc2531d6af91/scalar_fastapi-1.8.0.tar.gz", hash = "sha256:326e23becdd02d02e063751b27ee55855468d18f6bc2e1a0fe3d7c96d6e74265", size = 8148, upload-time = "2026-03-04T11:02:24.214Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/02/2e51b96f27850dbf07e9a9885c02af6ec974b5ab80f32788b4fd6c534826/scalar_fastapi-1.8.0-py3-none-any.whl", hash = "sha256:80b573efbc9e9c2a7dc82ffc90e41538def213f862717793ea6ea894de75d955", size = 7527, upload-time = "2026-03-04T11:02:22.288Z" },
 ]
 
 [[package]]
