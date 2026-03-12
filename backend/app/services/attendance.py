@@ -28,14 +28,15 @@ class AttendanceService:
     def get_student_stats(
         db: Session,
         student_id: int,
+        teacher_id: int,
         month: int | None = None,
         year: int | None = None,
     ) -> AttendanceStats | None:
         """
-        Get attendance statistics for a single student.
-        Returns AttendanceStats or None if student not found.
+        Get attendance statistics for a single student (must belong to teacher).
+        Returns AttendanceStats or None if student not found or doesn't belong to teacher.
         """
-        student = StudentRepository.get_student_by_id(db, student_id)
+        student = StudentRepository.get_student_by_id(db, student_id, teacher_id)
         if not student:
             return None
 
@@ -66,17 +67,24 @@ class AttendanceService:
         db: Session,
         month: int,
         year: int,
+        teacher_id: int,
     ) -> MonthlyReport:
         """
-        Generate monthly attendance report for all students.
+        Generate monthly attendance report for students of the given teacher.
         """
-        stats = AttendanceRepository.get_all_students_monthly_stats(db, month, year)
+        students = StudentRepository.get_students(db, teacher_id)
 
         students_data = []
         total_percentage = 0.0
         below_threshold_count = 0
 
-        for student, total_days, present, absent, late in stats:
+        for student in students:
+            total_days, present, absent, late = (
+                AttendanceRepository.get_student_attendance_stats(
+                    db, student.id, month, year
+                )
+            )
+            
             percentage = AttendanceService.calculate_attendance_percentage(
                 present, late, total_days
             )
@@ -101,7 +109,7 @@ class AttendanceService:
                 )
             )
 
-        total_students = len(stats)
+        total_students = len(students_data)
         avg_percentage = (
             (total_percentage / total_students) if total_students > 0 else 0.0
         )
@@ -118,38 +126,42 @@ class AttendanceService:
     @staticmethod
     def get_below_threshold_students(
         db: Session,
+        teacher_id: int,
         threshold: float = 75.0,
         month: int | None = None,
         year: int | None = None,
     ) -> list[MonthlyReportDetail]:
         """
-        Get all students below the specified threshold.
+        Get students of the given teacher whose attendance is below the threshold.
         """
-        students_below = AttendanceRepository.get_students_below_threshold(
-            db, threshold, month, year
-        )
+        students = StudentRepository.get_students(db, teacher_id)
 
         result = []
-        for student, percentage in students_below:
-            # Get detailed stats
+        for student in students:
             total_days, present, absent, late = (
                 AttendanceRepository.get_student_attendance_stats(
                     db, student.id, month, year
                 )
             )
-
-            result.append(
-                MonthlyReportDetail(
-                    id=student.id,
-                    student_id=student.student_id,
-                    full_name=student.full_name,
-                    total_days=total_days,
-                    present=present,
-                    absent=absent,
-                    late=late,
-                    percentage=round(percentage, 2),
-                    is_below_threshold=True,
-                )
+            
+            percentage = AttendanceService.calculate_attendance_percentage(
+                present, late, total_days
             )
+            
+            # Only include if below threshold
+            if percentage < threshold:
+                result.append(
+                    MonthlyReportDetail(
+                        id=student.id,
+                        student_id=student.student_id,
+                        full_name=student.full_name,
+                        total_days=total_days,
+                        present=present,
+                        absent=absent,
+                        late=late,
+                        percentage=round(percentage, 2),
+                        is_below_threshold=True,
+                    )
+                )
 
         return result
