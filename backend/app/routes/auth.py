@@ -1,7 +1,7 @@
 """
 API routes for authentication endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..schemas.auth import (
@@ -58,9 +58,14 @@ def login(
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token(
-    refresh_token: str = Body(..., embed=True),
+    refresh_token: str | None = Cookie(None),
 ):
     """Refresh access token using refresh token."""
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token missing",
+        )
     try:
         return AuthService.refresh_access_token(refresh_token)
     except ValueError:
