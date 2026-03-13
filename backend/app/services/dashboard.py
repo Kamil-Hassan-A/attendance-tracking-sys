@@ -1,23 +1,22 @@
 from datetime import datetime, date
 
-from app.database import SessionLocal
+from sqlalchemy.orm import Session
+
 from app.models.student import Student, AttendanceStatus
 from app.services.attendance import AttendanceService
 from app.repositories.student import AttendanceRepository
 
 
-def get_dashboard_stats():
-
-    db = SessionLocal()
-
-    teacher_id = 1  # temporary (later from JWT auth)
+def get_dashboard_stats(db: Session, teacher_id: int):
 
     now = datetime.now()
     month = now.month
     year = now.year
 
-    # total students
-    total_students = db.query(Student).count()
+    # total students for this teacher
+    total_students = db.query(Student).filter(
+        Student.created_by == teacher_id
+    ).count()
 
     # monthly report
     monthly_report = AttendanceService.get_monthly_report(
@@ -35,8 +34,6 @@ def get_dashboard_stats():
         year=year,
     )
 
-    db.close()
-
     return {
         "total_students": total_students,
         "monthly_total_students": monthly_report.total_students,
@@ -45,11 +42,7 @@ def get_dashboard_stats():
     }
 
 
-def get_today_stats():
-
-    db = SessionLocal()
-
-    teacher_id = 1  # temporary until auth implemented
+def get_today_stats(db: Session, teacher_id: int):
 
     today = date.today()
 
@@ -72,8 +65,6 @@ def get_today_stats():
             late += 1
 
     total = len(records)
-
-    db.close()
 
     return {
         "date": str(today),

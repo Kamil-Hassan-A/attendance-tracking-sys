@@ -1,46 +1,35 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime
 
-from app.database import SessionLocal
+from app.database import get_db
+from app.utils.jwt import get_current_user
+
 from app.services.attendance import AttendanceService
 
-router = APIRouter(prefix="/reports", tags=["Reports"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 @router.get("/monthly")
-def monthly_report(db: Session = Depends(get_db)):
-
-    now = datetime.now()
-
-    report = AttendanceService.get_monthly_report(
+def monthly_report(
+    month: int,
+    year: int,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    return AttendanceService.get_monthly_report(
         db=db,
-        month=now.month,
-        year=now.year,
-        teacher_id=1,
+        month=month,
+        year=year,
+        teacher_id=current_user,
     )
-
-    return report
 
 
 @router.get("/below-threshold")
-def below_threshold(db: Session = Depends(get_db)):
-
-    now = datetime.now()
-
-    students = AttendanceService.get_below_threshold_students(
+def below_threshold(
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    return AttendanceService.get_below_threshold_students(
         db=db,
-        teacher_id=1,
-        month=now.month,
-        year=now.year,
+        teacher_id=current_user,
     )
-
-    return students
