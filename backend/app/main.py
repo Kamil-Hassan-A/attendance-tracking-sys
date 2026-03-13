@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.dashboard import router as dashboard_router
+from app.routes.reports import router as reports_router
 
 from .config import settings
 from .routes import auth, students, attendance, docs
@@ -26,6 +27,7 @@ app.include_router(students.router)
 app.include_router(attendance.router)
 app.include_router(docs.docs_router)
 app.include_router(dashboard_router)
+app.include_router(reports_router)
 
 @app.get("/")
 async def root():
