@@ -11,7 +11,7 @@ from ..schemas.student import (
 )
 from ..repositories.student import StudentRepository, AttendanceRepository
 from ..services.attendance import AttendanceService
-from ..utils.jwt import get_current_user
+from ..utils.jwt import get_current_user, get_current_student
 
 router = APIRouter(prefix="/api/attendance", tags=["attendance"])
 
@@ -157,3 +157,16 @@ def get_below_threshold_students(
         db, threshold=threshold, month=month, year=year, teacher_id=current_user
     )
     return students
+
+@router.get("/my")
+def get_my_attendance(
+    db: Session = Depends(get_db),
+    current_student: int = Depends(get_current_student),
+):
+
+    records = AttendanceRepository.get_attendance_by_student(
+        db,
+        student_id=current_student,
+    )
+
+    return records

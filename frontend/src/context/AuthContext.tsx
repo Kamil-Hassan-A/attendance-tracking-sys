@@ -31,18 +31,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Bind the token setter so the Axios interceptor can update context
+  // bind token setter
   useEffect(() => {
     bindTokenSetter(setAccessToken);
   }, []);
 
-  // Keep the module-level token in sync with state
+  // sync token
   useEffect(() => {
     setToken(accessToken);
   }, [accessToken]);
 
-  // Silent refresh on app boot
+  // ✅ FIXED — silent refresh but skip for student pages
   useEffect(() => {
+
+    const path = window.location.pathname;
+
+    // skip teacher auth for student pages
+    if (path.startsWith("/student")) {
+      setIsLoading(false);
+      return;
+    }
+
     const silentRefresh = async () => {
       try {
         const res = await axios.post(
@@ -50,28 +59,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           {},
           { withCredentials: true }
         );
+
         setAccessToken(res.data.access_token);
+
       } catch {
         setAccessToken(null);
       } finally {
         setIsLoading(false);
       }
     };
+
     silentRefresh();
+
   }, []);
 
-  // Fetch /me whenever token changes
+  // fetch teacher
   useEffect(() => {
     if (!accessToken) {
       setTeacher(null);
       return;
     }
+
     api
       .get("/auth/me", {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then((res) => setTeacher(res.data))
       .catch(() => setTeacher(null));
+
   }, [accessToken]);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -80,12 +95,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       { email, password },
       { withCredentials: true }
     );
+
     setAccessToken(res.data.access_token);
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      await axios.post(
+        `${API_URL}/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
     } finally {
       setAccessToken(null);
       setTeacher(null);
@@ -94,7 +114,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ accessToken, teacher, isLoading, login, logout, setAccessToken }}
+      value={{
+        accessToken,
+        teacher,
+        isLoading,
+        login,
+        logout,
+        setAccessToken,
+      }}
     >
       {children}
     </AuthContext.Provider>

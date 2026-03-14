@@ -1,8 +1,17 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ProtectedRoute() {
+
   const { accessToken, isLoading } = useAuth();
+  const location = useLocation();
+
+  // ✅ allow student routes without teacher login
+  if (
+    location.pathname.startsWith("/student")
+  ) {
+    return <Outlet />;
+  }
 
   if (isLoading) {
     return (
@@ -12,5 +21,6 @@ export default function ProtectedRoute() {
     );
   }
 
+  // teacher protected
   return accessToken ? <Outlet /> : <Navigate to="/login" replace />;
 }

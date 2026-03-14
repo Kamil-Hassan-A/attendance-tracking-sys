@@ -169,7 +169,7 @@ export default function StudentDetail() {
                         icon: null,
                         accent: "text-destructive",
                     },
-                ].map(({ label, value, icon, accent }) => (
+                ].map(({ label, value, accent }) => (
                     <Card key={label}>
                         <CardHeader>
                             <CardDescription>{label}</CardDescription>

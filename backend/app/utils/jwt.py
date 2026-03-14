@@ -111,3 +111,35 @@ def get_current_user(
         )
 
     return teacher_id
+
+def get_current_student(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> int:
+    """
+    Extract and verify the access token from Authorization header for a student.
+    Returns the student_id if valid.
+    """
+    token = credentials.credentials
+    payload = verify_token(token)
+
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    if payload.get("role") != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not a student",
+        )
+
+    try:
+        student_id = int(payload["sub"])
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    return student_id
