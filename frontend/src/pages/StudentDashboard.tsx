@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import api, { setToken } from "@/services/api"
+import api from "@/services/api"
 
 function StudentDashboard() {
   const navigate = useNavigate()
   const [records, setRecords] = useState<any[]>([])
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("student_token")
-    if (savedToken) {
-      setToken(savedToken)
-    }
-
     api
       .get(`/attendance/my`)
       .then(res => setRecords(res.data))

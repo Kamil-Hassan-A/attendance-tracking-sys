@@ -72,7 +72,11 @@ class AuthService:
             raise ValueError("Invalid or expired refresh token")
 
         teacher_id = payload["sub"]
-        new_access_token = create_access_token({"sub": teacher_id})
+        new_payload = {"sub": teacher_id}
+        if "role" in payload:
+            new_payload["role"] = payload["role"]
+            
+        new_access_token = create_access_token(new_payload)
 
         return TokenResponse(
             access_token=new_access_token,

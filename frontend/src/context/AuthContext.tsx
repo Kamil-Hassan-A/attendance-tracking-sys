@@ -41,17 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(accessToken);
   }, [accessToken]);
 
-  // ✅ FIXED — silent refresh but skip for student pages
+  // silent refresh
   useEffect(() => {
-
-    const path = window.location.pathname;
-
-    // skip teacher auth for student pages
-    if (path.startsWith("/student")) {
-      setIsLoading(false);
-      return;
-    }
-
     const silentRefresh = async () => {
       try {
         const res = await axios.post(

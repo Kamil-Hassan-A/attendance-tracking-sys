@@ -32,12 +32,18 @@ export default function StudentLogin() {
     setLoading(true);
     try {
       const res = await api.post(
-        `/student-auth/login?email=${encodeURIComponent(email)}&student_id=${encodeURIComponent(studentId)}`
+        `/student-auth/login`,
+        {
+          email: email,
+          student_id: studentId,
+        },
+        { withCredentials: true }
       );
       const token = res.data.access_token;
       if (token) {
         setToken(token);
-        localStorage.setItem("student_token", token);
+        // Note: relying on memory/AuthContext and the refresh HttpOnly cookie 
+        // for persistence instead of localStorage.
       }
       navigate("/student-dashboard", { replace: true });
     } catch (err: any) {
