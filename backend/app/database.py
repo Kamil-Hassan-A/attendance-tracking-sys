@@ -18,6 +18,13 @@ class Base(DeclarativeBase):
     pass
 
 
+# Import models so they register with Base before create_all()
+from .models.teacher import Teacher
+from .models.student import Student, AttendanceRecord
+
+Base.metadata.create_all(bind=engine)
+
+
 def get_db():
     db = SessionLocal()
     try:

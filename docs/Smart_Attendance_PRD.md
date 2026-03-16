@@ -76,7 +76,6 @@ Build a full-stack web application where authenticated users — administrators 
 | Backend | FastAPI | REST API framework with async support |
 | | SQLAlchemy 2.0 | ORM for database interaction |
 | | Pydantic v2 | Request/response validation and schemas |
-| | Alembic | Database migrations |
 | Database | PostgreSQL | Relational database for persistent storage |
 | Auth | python-jose + passlib | JWT generation and bcrypt password hashing |
 
@@ -133,10 +132,7 @@ backend/
 ├── database.py                      # SQLAlchemy engine, SessionLocal, get_db dependency
 ├── requirements.txt
 ├── .env.example
-├── alembic/                         # Database migrations
-│   ├── versions/                    # Migration script files
-│   ├── env.py                       # Alembic runtime configuration
-│   └── script.py.mako               # Migration template
+
 ├── models/
 │   ├── teacher.py                   # Teacher ORM model
 │   └── student.py                   # Student + AttendanceRecord ORM models, AttendanceStatus enum
@@ -212,40 +208,7 @@ frontend/
 | src/pages/MarkAttendance.jsx | Date picker, list all students, mark Present / Absent / Late per student |
 | src/pages/Reports.jsx | Month/year selector, monthly report table, below-threshold filter view |
 
----
 
-## 5. Database Migrations (Alembic)
-
----
-
-Database schema is version-controlled via Alembic. Migrations allow team members to sync schema changes and deploy to production reliably.
-
-### 5.1 Migration Workflow
-
-**Initial Setup (Day 1):**
-1. Run `alembic init alembic` to scaffold Alembic directory.
-2. Configure `alembic/env.py` to use the SQLAlchemy engine from `database.py`.
-3. Set `sqlalchemy.url` in `alembic.ini` to read from `.env` (DATABASE_URL).
-
-**During Development:**
-1. Define/modify ORM models in `models/` files.
-2. Run `alembic revision --autogenerate -m "descriptive message"` to create a migration script.
-   - Example: `alembic revision --autogenerate -m "create teachers and students tables"`
-3. Review the generated migration in `alembic/versions/`.
-4. Run `alembic upgrade head` to apply migration to local database.
-5. Commit migration file to git so teammates can apply it.
-
-**For Team Synchronization:**
-1. When pulling code with new migrations, run `alembic upgrade head` to sync schema.
-2. Never manually edit generated migration files unless fixing critical bugs.
-
-### 5.2 Key Migrations
-
-| Migration | Who Creates | When | Command |
-|---|---|---|---|
-| Create Teachers, Students, AttendanceRecords | Person A | Day 1 (after models) | `alembic revision --autogenerate -m "initial schema"` |
-| Add indexes on email, student_id, date | Person A | Day 2 | `alembic revision --autogenerate -m "add indexes"` |
-| (Future) Add created_by to Students table | N/A | v1.1 | `alembic revision --autogenerate -m "add student audit fields"` |
 
 ---
 
@@ -412,26 +375,26 @@ A student can only have one attendance record per calendar date. If a record alr
 
 | Area | Person A | Person B |
 |---|---|---|
-| Database & Migrations | DB setup, config, database.py, Alembic init | Same — shared setup tasks |
+| Database Setup | DB setup, config, database.py | Same — shared setup tasks |
 | Auth | Register, Login endpoints (for teachers), JWT utils, refresh/logout, AuthContext, Login & Register pages, ProtectedRoute, Axios interceptor | — |
 | Students | Student CRUD backend (model, schema, repo, service, route) + Students page frontend | — |
 | Dashboard | Dashboard page (consumes stats APIs) | — |
 | Attendance | — | Attendance model, schemas, repo, service (upsert logic, percentage calc), attendance routes |
 | Mark Page | — | Mark Attendance page frontend |
 | Reports | — | Monthly report + below-threshold endpoint + Reports page frontend |
-| Migrations & Docs | Generate initial migration, run `alembic upgrade head` | README, API docs, final integration testing |
+| Documentation | — | README, API docs, final integration testing |
 
 ### 10.2 Day-by-Day Timeline
 
 | Day | Person A | Person B |
 |---|---|---|
-| 1 | Repo setup, PostgreSQL, config.py, database.py, Alembic init, Teacher + Student models | Same — shared setup tasks |
-| 2 | Auth backend: register, login, JWT utils, refresh/logout; generate + run initial migration | Student model → repo, service, CRUD routes; Attendance model + schema |
+| 1 | Repo setup, PostgreSQL, config.py, database.py, Teacher + Student models | Same — shared setup tasks |
+| 2 | Auth backend: register, login, JWT utils, refresh/logout; create tables in DB | Student model → repo, service, CRUD routes; Attendance model + schema |
 | 3 | React scaffold, AuthContext, Axios + interceptor, Login + Register pages | Attendance repo, mark endpoint (upsert logic), attendance routes |
 | 4 | ProtectedRoute, Navbar, Dashboard page, Students page | Stats endpoint, % calculation, below-threshold endpoint, report endpoint |
 | 5 | Polish Dashboard, CRUD actions in Students UI | Mark Attendance page, Reports page frontend |
-| 6 | Full integration: connect frontend to all APIs, fix CORS, test auth end-to-end | Same — integration, migration sync test, verify schema |
-| 7 | Error handling polish, responsive checks, schema/API docs | README (with migration instructions), final demo prep |
+| 6 | Full integration: connect frontend to all APIs, fix CORS, test auth end-to-end | Same — integration, schema verification |
+| 7 | Error handling polish, responsive checks, schema/API docs | README, final demo prep |
 
 ---
 
@@ -445,11 +408,10 @@ The `README.md` must be present in the project root and cover all of the followi
 2. **Tech Stack** — list all technologies used.
 3. **Prerequisites** — Node.js, Python, PostgreSQL versions required.
 4. **Environment Setup** — `.env.example` walkthrough for both backend and frontend.
-5. **Database Migrations** — How to run Alembic migrations (`alembic upgrade head`), what to do if migrations fail.
-6. **How to Run** — step-by-step for backend (uvicorn) and frontend (vite dev) separately.
-7. **Folder Structure** — annotated tree of both `backend/` and `frontend/` directories.
-8. **API Endpoints** — full table matching Section 6 of this PRD.
-9. **Auth Flow** — brief explanation of the dual-token strategy for reviewers.
+5. **How to Run** — step-by-step for backend (uvicorn) and frontend (vite dev) separately.
+6. **Folder Structure** — annotated tree of both `backend/` and `frontend/` directories.
+7. **API Endpoints** — full table matching Section 6 of this PRD.
+8. **Auth Flow** — brief explanation of the dual-token strategy for reviewers.
 
 ---
 
