@@ -42,8 +42,6 @@ export default function StudentLogin() {
       const token = res.data.access_token;
       if (token) {
         setToken(token);
-        // Note: relying on memory/AuthContext and the refresh HttpOnly cookie 
-        // for persistence instead of localStorage.
       }
       navigate("/student-dashboard", { replace: true });
     } catch (err: any) {

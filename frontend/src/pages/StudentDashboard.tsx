@@ -8,7 +8,7 @@ function StudentDashboard() {
 
   useEffect(() => {
     api
-      .get(`/attendance/my`)
+      .get(`/attendance/me`)
       .then(res => setRecords(res.data))
       .catch(() => {
         console.log("error fetching attendance")

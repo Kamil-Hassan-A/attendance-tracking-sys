@@ -47,14 +47,6 @@ via psql:
 CREATE DATABASE attendance_db;
 ```
 
-### 5. Run Database Migrations
-
-```bash
-uv run alembic upgrade head
-```
-
-This creates all tables: `teachers`, `students`, `attendance_records`.
-
 ### 6. Start the Development Server
 
 ```bash

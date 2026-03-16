@@ -42,7 +42,7 @@ export default function Navbar() {
       {/* Brand */}
       <NavLink to="/" className="flex items-center gap-2 text-sm font-semibold">
         <GraduationCap className="h-5 w-5 text-primary" />
-        <span className="hidden sm:inline">AttendTrack</span>
+        <span className="hidden sm:inline">Attendance Tracker</span>
       </NavLink>
 
       <Separator orientation="vertical" className="h-6" />

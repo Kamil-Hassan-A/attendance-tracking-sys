@@ -30,11 +30,6 @@ class StudentRepository:
         return student
 
     @staticmethod
-    def get_student_by_id(db: Session, student_id: int) -> Student | None:
-        """Get student by internal ID."""
-        return db.query(Student).filter(Student.id == student_id).first()
-
-    @staticmethod
     def get_student_by_student_id(db: Session, student_id: str) -> Student | None:
         """Get student by student_id (institutional ID)."""
         return db.query(Student).filter(Student.student_id == student_id).first()

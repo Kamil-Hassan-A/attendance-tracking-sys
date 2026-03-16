@@ -158,7 +158,7 @@ def get_below_threshold_students(
     )
     return students
 
-@router.get("/my")
+@router.get("/me")
 def get_my_attendance(
     db: Session = Depends(get_db),
     current_student: int = Depends(get_current_student),

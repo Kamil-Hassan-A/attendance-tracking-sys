@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import axios from "axios";
-import api, { API_URL, bindTokenSetter, setToken } from "@/services/api";
+import { API_URL, bindTokenSetter, setToken } from "@/services/api";
 
 interface Teacher {
   teacher_id: number;
@@ -70,13 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTeacher(null);
       return;
     }
-
-    api
-      .get("/auth/me", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-      .then((res) => setTeacher(res.data))
-      .catch(() => setTeacher(null));
 
   }, [accessToken]);
 
